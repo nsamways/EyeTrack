@@ -5,7 +5,6 @@ import numpy as np
 from detectors import *
 import re
 import os
-from sklearn.utils import estimator_checks
 
 
 #Fix functions
@@ -15,28 +14,28 @@ def mean(numbers):
 
 def replace_line(subject_path,badIndex): # Replace or remove the bad line of the file using the index
     
-    #Open the bad file and find the error line
-    f=open(subject_path,"r")
+        # Open the bad file and find the line containing the error
+        f = open(subject_path,"r")
 
-    data=f.readlines() 
-    badLine = data[badIndex-1]
-    del f
+        data=f.readlines() 
+        badLine = data[badIndex-1]
+        del f
     
-    if "Trial" in badLine: #If that bad line contains xxx then try to replace it
-        print("REPLACING")
-        template = "    "+"\t"+"xxx"
-        data[badIndex-1] = template
-        with open(subject_path, 'w') as fileG:
-            fileG.writelines(data)
-            del fileG
-
-    else: # If is not gamble then remove it
-        print("REMOVING: index %d" %badIndex)
-        template = "    "											
-        data[badIndex-1] = template
-        with open(subject_path, 'w') as fileB:
-            fileB.writelines(data)
-            del fileB
+        if "Trial" in badLine: #If that bad line contains xxx then try to replace it
+            print("REPLACING")
+            template = "    "+"\t"+"xxx"
+            data[badIndex-1] = template
+            with open(subject_path, 'w') as fileG:
+                fileG.writelines(data)
+                del fileG
+    
+        else: # If is not gamble then remove it
+            print("REMOVING: index %d" %badIndex)
+            template = "    "											
+            data[badIndex-1] = template
+            with open(subject_path, 'w') as fileB:
+                fileB.writelines(data)
+                del fileB
     
 
 def get_badIndex(e): # Get the index as integer from error
@@ -308,7 +307,7 @@ class Subject:
         
         self.beh = self.beh.loc[:,["correct","stimuli","response_time"]] # pick out only the required columns
 
-    def get_trials(self): # This method return a list of indexes representing the start and end  of a trials in the et table
+    def get_trials(self): # This returns a list of indexes representing the start and end of a trials in the eyetracking table
         
         
         trials = [] # a list of trial dataframes containing only the samples within the trial time period (i.e. gets rid of the junk samples between trials)
@@ -319,9 +318,9 @@ class Subject:
         ####   This may be temporary in case other columns have to be used if gamble may not be in the Event column
         self.et = self.et.loc[:,["TimeStamp","Event","GazePointX","GazePointY"]] # change the et dataframe to only include the given columns
         #####
-        for i in self.et.index:          # Loop though the et table with the index           
+        for i in self.et.index:         # Loop though the et table with the index           
             val = self.et.at[i,"Event"] # Pandas "at" method returns the value at that particular cell using the current row (i) and column name ("Event")
-            if "Trial:" in str(val): # If gamble is in value then store the index // we need to not use "gamble" but the "Start_Trial" then we need to extract the 
+            if "Trial:" in str(val): # If "Trial" is in value then store the index  
 
                 # also get the name of the stimuli
                 
@@ -349,7 +348,7 @@ class Subject:
         
         return stim,response_time,accuracy,position
         
-    def get_output(self):# this should be main method to return the dataframe for this current subject with all of his trials processed
+    def get_output(self):# this should be main method to return the dataframe for this current subject with all of the trials processed
         
         trials = self.get_trials() # Get the trials found from the subject table
         subject_table = []
