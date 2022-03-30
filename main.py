@@ -26,7 +26,7 @@ def get_subjects(): # Returns a list of tuples of eye tracking and behavioural d
         if "subject" in file:
             try:
                 nr = get_subject_nr(file) # Get the subject number
-                subject_numbers[file]=nr # Add the file and it's number to the dictionary
+                subject_numbers[file] = nr # Add the file and it's number to the dictionary
             except ValueError:
                 logging.error("ERROR: Check for files with name containing 'subject' without number")
                 
@@ -72,12 +72,11 @@ def get_AOIs():
     return AOI_Dict
     
 def main():
-
     # Get the list of subjects from the current folder
     subject_list = get_subjects()
     
-    # Get the AOI information
-    AOI_collection = get_AOIs()
+    # Get the AOI information and pass to the trial object - it's the same for all of them afterall
+    Trial.AOIs = get_AOIs()
     
     # create a dataframe for the complete results
     final_output = pd.DataFrame() 
@@ -102,12 +101,9 @@ def main():
     #
     # #Export the table to a csv file
     # final_output.to_csv("Final-Output.csv", index = False)
-    #
-
+    
+    
     #show the timing metrics
-
-    print(AOI_collection["100_c_24_12g_a_3.jpg"][0][0])
-
     end = time.perf_counter()  
     print("Program ended. Duration: ", end-start)
         

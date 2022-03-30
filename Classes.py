@@ -1,68 +1,84 @@
 #Classes 
-import time
-import pandas as pd
-import numpy as np
-from detectors import *
-import re
+
+""" This file contains some functions and class definitions of for eye tracking utilities. """
+
 import os
+import re
+import time
+
+import numpy as np
+import pandas as pd
+
+from detectors import *
 
 
-#Fix functions
-
+# Misc and Fix functions
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
 
-def replace_line(subject_path,badIndex): # Replace or remove the bad line of the file using the index
-    
-        # Open the bad file and find the line containing the error
-        f = open(subject_path,"r")
 
-        data=f.readlines() 
-        badLine = data[badIndex-1]
-        del f
+# Replace or remove the bad line of the file using the index
+def replace_line(subject_path,badIndex): 
     
-        if "Trial" in badLine: #If that bad line contains xxx then try to replace it
-            print("REPLACING")
-            template = "    "+"\t"+"xxx"
-            data[badIndex-1] = template
-            with open(subject_path, 'w') as fileG:
-                fileG.writelines(data)
-                del fileG
-    
-        else: # If is not gamble then remove it
-            print("REMOVING: index %d" %badIndex)
-            template = "    "											
-            data[badIndex-1] = template
-            with open(subject_path, 'w') as fileB:
-                fileB.writelines(data)
-                del fileB
+    # Open the bad file and find the line containing the error
+    f = open(subject_path, "r")
+
+    data = f.readlines() 
+    badLine = data[badIndex-1]
+    del f
+
+    if "Trial" in badLine: # If bad line contains "Trial" then try to replace it
+        print("REPLACING: index %d" %badIndex)
+        template = "    "+"\t"+"TRIAL"
+        data[badIndex-1] = template
+        
+        with open(subject_path, 'w') as fileG:
+            fileG.writelines(data)
+            del fileG
+
+    else: # If is not a trial then remove it
+        print("REMOVING: index %d" %badIndex)
+        template = "    "											
+        data[badIndex-1] = template
+        
+        with open(subject_path, 'w') as fileB:
+            fileB.writelines(data)
+            del fileB
     
 
-def get_badIndex(e): # Get the index as integer from error
+def get_bad_index(e): # Get the index as integer from error
     result = [f for f in re.split("[^0-9]", str(e)) if f != ''] 
     return (max(map(int, result)))
 
       
-def check_et(et_path,subject_nr): # This function will verify the eye tracking file for any problems
+def check_et(et_path,subject_nr): # This function will check the eye tracking file for any problems
     temp = False 
-    while temp == False: # Continuosly try to read the file, if worked then stop, otherwise try to fix it
+    while temp == False: # Continuously try to read the file, halt if successful, otherwise try to fix the file
         try:
             et = pd.read_csv(et_path,sep="\t",skiprows=17,low_memory=False) # Read the tab separated file with pandas and skip the first 17 rows
-            temp = True # no more bad lines in the code
+            temp = True # no more bad lines in the file
         except pd.errors.ParserError as e:
-            print("Subject %d has a bad line, trying to fix."%subject_nr)
-            badIndex = get_badIndex(e) # Get the index of where the error was
+            print("Subject %d has a bad line, trying to fix." %subject_nr)
+            badIndex = get_bad_index(e) # Get the index of where the error was located
             replace_line(et_path,badIndex) # Replace the error line with good or bad
             temp = False
+            
     return et
 
 
 #Classes
 class Trial: # This class creates an object with every table trial from the subject
+    
+    # class variables
+    AOIs = {}
+    
     def __init__(self,dataframe,stim):
-        self.dataframe = dataframe # The trial table or dataframe in pandas
+        self.dataframe = dataframe # The trial table / dataframe in pandas
         self.stim = stim
-        
+    
+    @classmethod
+    def get_aoi_info(cls,a,b,c):
+        return cls.AOIs[a][b][c]
         
     def get_fixations_samples(self): #Get the fixations for the given dataframe       
     
@@ -71,24 +87,20 @@ class Trial: # This class creates an object with every table trial from the subj
         dfListY = self.dataframe["GazePointY"].tolist()
         dfListT = self.dataframe["TimeStamp"].tolist()
         
-        
         # Convert to floats
         dfListX =list(map(float, dfListX))
         dfListY =list(map(float, dfListY))
         dfListT =list(map(float, dfListT))
         
-        
         #Take the X and Y samples
         gazeX_samples = dfListX 
         gazeY_samples = dfListY
-        
     
         subject_totalX = len(gazeX_samples)
         subject_totalY = len(gazeY_samples)
     
         subject_goodX = []
-        subject_goodY = []
-        
+        subject_goodY = []      
         
         #Add the good samples to a list of good samples
         for vX in gazeX_samples:
@@ -256,13 +268,11 @@ class Trial: # This class creates an object with every table trial from the subj
                         AOI_p.append(duration)
 
                         
-        
         #Bad and Good fixations
         total_fixations = len(fixations)
         good_fixations = len(AOI_p)+len(AOI_q)+len(AOI_x)+len(AOI_y)
         bad_fixations = total_fixations - good_fixations
         
-
             
         #Percentage for good and bad fixations
         if good_fixations != 0 or total_fixations != 0:
@@ -274,9 +284,7 @@ class Trial: # This class creates an object with every table trial from the subj
             perc_bad_fix = ((bad_fixations/total_fixations)*100)
         else:
             perc_bad_fix = 0
-            
-            
-       
+
         
         #After every fixation has been put in their particular AOI process and return the AOIs_perc
         AOIs_perc = self.get_AOI_MT(AOI_p,AOI_q,AOI_x,AOI_y)
@@ -284,55 +292,61 @@ class Trial: # This class creates an object with every table trial from the subj
         #Return the AOI, percentanges for fixations and samples data
         return [AOIs_perc] + [perc_good_fix] + [perc_bad_fix] + fixations_samples[1:3]
     
-        
-
       
 class Subject: 
+    
+    # class variables
+
     def __init__(self,et_file_path,beh_file_path,subject_nr):
         self.et = et_file_path
         self.beh = beh_file_path
- #       print("Self.beh filepath = %s" %self.beh)
         
         self.subject_nr = subject_nr
         self.read_clean_files()
-    
+
+        a = "100_c_24_12g_a_3.jpg"
+        b = 2
+        c = 3
+        
+        print(Trial.get_aoi_info(a,b,c))
+#       print(Trial.get_aoi_info(["100_c_24_12g_a_3.jpg"][0][0]))
+
+
+
     def read_clean_files(self):
         
-        #Load and create the dataframes(tables)
-        self.et = check_et(self.et,self.subject_nr) #Clean eye tracking file of any possible errors and return the dataframe 
-
-        self.beh = pd.read_csv(self.beh) #Read the table using pandas - this does not usually cause any problems or need cleaning
-        
-        # Use loc method in which the first argument (:) takes every row from the table and in the second argument takes only specific columns 
-        
+        # Load and create the dataframes(tables)
+        self.et = check_et(self.et,self.subject_nr) # Clean eye tracking file of errors and return the dataframe 
+        self.beh = pd.read_csv(self.beh) # Read the table using pandas - this does not usually cause any problems or need cleaning
+    
+        # Use loc method in which the first argument (:) takes every row from the table and in the second argument takes only specific columns     
         self.beh = self.beh.loc[:,["correct","stimuli","response_time"]] # pick out only the required columns
 
-    def get_trials(self): # This returns a list of indexes representing the start and end of a trials in the eyetracking table
-        
-        
+    def get_trials(self): # This returns a list of indexes representing the start and end of a trials in the eye tracking table
+                            # !!Change to return a dict instead
         trials = [] # a list of trial dataframes containing only the samples within the trial time period (i.e. gets rid of the junk samples between trials)
         trials_indexes = [] # Here we store the tuples with the start-end indexes
         ph = 0 #A place holder for start-trial index
         
-        #temp_values = []
-        ####   This may be temporary in case other columns have to be used if gamble may not be in the Event column
         self.et = self.et.loc[:,["TimeStamp","Event","GazePointX","GazePointY"]] # change the et dataframe to only include the given columns
-        #####
+        
         for i in self.et.index:         # Loop though the et table with the index           
             val = self.et.at[i,"Event"] # Pandas "at" method returns the value at that particular cell using the current row (i) and column name ("Event")
             if "Trial:" in str(val): # If "Trial" is in value then store the index  
 
                 # also get the name of the stimuli
                 
-                
-                if ph != 0:   # if ph !=0 then ph is start-Trial
-                    trials_indexes.append((ph,i)) #Append the ph and the current index
-                    ph = 0 #Reset
-                else: # If ph is 0 then take the index of start-gamble
+                if ph != 0:   # if ph !=0 then this is an end trail (ph is currently the start-Trial index for this trial)
+                    trials_indexes.append((ph,i)) # Append the ph and the current index
+                    ph = 0 # Reset the placeholder so that now it will pick up the start of the next trial
+                    #? Change this to a dict such that a key (stim name) is paired with a tuple of start, end indices
+                    
+                else: # If ph is 0 then take the index of start-Trial
                     ph = i 
         
         if len(trials_indexes) < 150 :
             print("Warning! Subject %d has %d trials instead of 150 "%(self.subject_nr,len(trials_indexes)))
+        
         for trial_index in trials_indexes:
             trials.append(pd.DataFrame(self.et.iloc[(trial_index[0]+1):trial_index[1]])) #Add the trial table to a list of table trials
                                                                                     # "iloc" is similiar to loc but it uses indexes, in this case the start and end of a particular trial in the et table 
@@ -348,7 +362,7 @@ class Subject:
         
         return stim,response_time,accuracy,position
         
-    def get_output(self):# this should be main method to return the dataframe for this current subject with all of the trials processed
+    def get_output(self):# this is the main method to return the dataframe for this current subject with all of the trials processed
         
         trials = self.get_trials() # Get the trials found from the subject table
         subject_table = []
@@ -358,7 +372,7 @@ class Subject:
             
             beh_data = self.get_beh_data(i) # Get the current row with the values we want from the beh file
             
-            current_trial = Trial(trial,beh_data[0]) # Create an trial object with the trial table and the current x_loc
+            current_trial = Trial(trial,beh_data[0]) # Create a trial object with the trial table and the current x_loc
 
             AOIs_perc = current_trial.get_AOIs_perc_Perc() # Get the AOIs_perc from that trial
             
