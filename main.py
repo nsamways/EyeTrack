@@ -15,7 +15,7 @@ def get_subject_nr(subject_path): # Return the subject number from the file name
     return int(''.join(filter(str.isdigit, subject_path)))
 
 
-def get_subjects(): # Returns a list of tuples of eye tracking and behavioural data
+def get_subjects(): # Returns a list of tuples of eye tracking and behavioural data filepaths
     
     fullList = os.listdir() # list every file in current directory
     subject_numbers = {}
@@ -40,6 +40,7 @@ def get_subjects(): # Returns a list of tuples of eye tracking and behavioural d
                         subject_pairs.append((file,file_2)) # Append the file pair with identical subject numbers in a tuple
 
     return subject_pairs
+
 
 def get_AOIs():
      
@@ -75,23 +76,26 @@ def main():
     # Get the list of subjects from the current folder
     subject_list = get_subjects()
     
-    # Get the AOI information and pass to the trial object - it's the same for all of them afterall
+    # Get the AOI information and pass to the trial object - it's the same for all of them anyway
     Trial.AOIs = get_AOIs()
     
     # create a dataframe for the complete results
-    final_output = pd.DataFrame() 
+    final_output = pd.DataFrame()
+     
     #Loop though the list of subject file pairs to create the subjects
-    
     for subject_files in subject_list:
     
         start = time.perf_counter()
-    
         print("Processing subject: " , get_subject_nr(subject_files[1]))
     
-        subject = Subject(subject_files[1],subject_files[0],get_subject_nr(subject_files[1])) #Create the subject object with the eye tracking and behavioural files
+        subject = Subject(subject_files[0],subject_files[1],get_subject_nr(subject_files[0])) #Create the subject object with the eye tracking and behavioural files
+        
+    #    current_subject = subject.get_results() # Get a data frame with the current subject's information
+        
+        
     #
     #     subject_raw = subject.get_output()   # Get a dataframe with all relevant information
-    #
+
     #     # Create an empty table using pandas and set the column names
     #     subject = pd.DataFrame(subject_raw) 
     #     subject.columns = ["Subject","Gamble","Domain","p_Meanfix","q_Meanfix","x_Meanfix","y_Meanfix","p_TotalFix","q_TotalFix","x_TotalFix","y_TotalFix","Good Fix %","Bad Fix %","Good X %","Good Y %","risk_selected","response_time"]
@@ -99,12 +103,13 @@ def main():
     #     #Add the new table with the old one by combining them using pandas
     #     final_output = pd.concat([final_output, subject])
     #
-    # #Export the table to a csv file
-    # final_output.to_csv("Final-Output.csv", index = False)
+    # Export the table to a csv file
     
+    final_output.to_csv("Final-Output.csv", index = False)
     
     #show the timing metrics
     end = time.perf_counter()  
+    
     print("Program ended. Duration: ", end-start)
         
 
