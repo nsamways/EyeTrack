@@ -295,9 +295,7 @@ class Trial: # This class creates an object with every table trial from the subj
       
 class Subject: 
     
-    # class variables
-
-    def __init__(self,et_file_path,beh_file_path,subject_nr):
+    def __init__(self,beh_file_path, et_file_path, subject_nr):
         self.et = et_file_path
         self.beh = beh_file_path
         
