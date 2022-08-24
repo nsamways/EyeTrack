@@ -302,12 +302,11 @@ class Subject:
         self.subject_nr = subject_nr
         self.read_clean_files()
 
-        a = "100_c_24_12g_a_3.jpg"
-        b = 2
-        c = 3
+        a = "100_c_24_12g_a_3.jpg" #  name of the stim in the AOI Dictionary
+        b = 2 # index of the item (distractor or target)
+        c = 3 # index of the specific metric of the itme (name, minX, minY etc.)
         
         print(Trial.get_aoi_info(a,b,c))
-#       print(Trial.get_aoi_info(["100_c_24_12g_a_3.jpg"][0][0]))
 
 
 

@@ -73,10 +73,10 @@ def get_AOIs():
     return AOI_Dict
     
 def main():
-    # Get the list of subjects from the current folder
+    # Get the list of subjects from the current folder - we end up with a list of tuples (containing the matching filenames)
     subject_list = get_subjects()
     
-    # Get the AOI information and pass to the trial object - it's the same for all of them anyway
+    # Get the AOI information and pass to the trial object - it's going to be the same *list* of AOIs for every trial
     Trial.AOIs = get_AOIs()
     
     # create a dataframe for the complete results
